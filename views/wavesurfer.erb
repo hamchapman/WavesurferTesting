@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>wavesurfer.js</title>
+
+<!--         <link href="data:image/gif;" rel="icon" type="image/x-icon" />
+        <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+ -->
+<!--         <link rel="stylesheet" href="http://simonwhitaker.github.com/github-fork-ribbon-css/gh-fork-ribbon.css" /> -->
+        <link rel="stylesheet" href="example/css/style.css" />
+        <script src="build/wavesurfer.min.js"></script>
+        <script src="example/trivia.js"></script>
+        <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+        <script type="text/javascript" src="/timeline.js"></script>
+        <link rel="stylesheet" type="text/css" href="/timeline.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <input type="text" class="current_position" placeholder="position">
+        <input type="text" class="track_duration" id="duration" placeholder="duration">
+        <script>
+        'use strict';
+
+        // Create an instance
+        var wavesurfer = Object.create(WaveSurfer);
+
+        // Init & load audio file
+        document.addEventListener('DOMContentLoaded', function () {
+            var options = {
+                container     : document.querySelector('#waveform'),
+                waveColor     : 'violet',
+                progressColor : 'purple',
+                loaderColor   : 'purple',
+                cursorColor   : 'navy',
+                markerWidth   : 2
+            };
+
+            if (location.search.match('scroll')) {
+                options.minPxPerSec = 100;
+                options.scrollParent = true;
+            }
+
+            if (location.search.match('normalize')) {
+                options.normalize = true;
+            }
+
+            /* Progress bar */
+            var progressDiv = document.querySelector('#progress-bar');
+            var progressBar = progressDiv.querySelector('.progress-bar');
+            wavesurfer.on('loading', function (percent, xhr) {
+                progressDiv.style.display = 'block';
+                progressBar.style.width = percent + '%';
+            });
+            wavesurfer.on('ready', function () {
+                progressDiv.style.display = 'none';
+            });
+
+            // Init
+            wavesurfer.init(options);
+            // Load audio from URL
+            wavesurfer.load('/imperial.mp3');
+
+            // Start listening to drag'n'drop on document
+            wavesurfer.bindDragNDrop('#drop');
+        });
+
+        // Play at once when ready
+        // Won't work on iOS until you touch the page
+        wavesurfer.on('ready', function () {
+            //wavesurfer.play();
+        });
+
+        // Bind buttons and keypresses
+        (function () {
+            var eventHandlers = {
+                'play': function () {
+                    wavesurfer.playPause();
+                },
+
+                'green-mark': function () {
+                    wavesurfer.mark({
+                        id: 'up',
+                        color: 'rgba(0, 255, 0, 0.5)'
+                    });
+                },
+
+                'red-mark': function () {
+                    wavesurfer.mark({
+                        id: 'down',
+                        color: 'rgba(255, 0, 0, 0.5)'
+                    });
+                },
+
+                'back': function () {
+                    wavesurfer.skipBackward();
+                },
+
+                'forth': function () {
+                    wavesurfer.skipForward();
+                },
+
+                'toggle-mute': function () {
+                    wavesurfer.toggleMute();
+                }
+            };
+
+            document.addEventListener('keydown', function (e) {
+                var map = {
+                    32: 'play',       // space
+                    38: 'green-mark', // up
+                    40: 'red-mark',   // down
+                    37: 'back',       // left
+                    39: 'forth'       // right
+                };
+                if (e.keyCode in map) {
+                    var handler = eventHandlers[map[e.keyCode]];
+                    e.preventDefault();
+                    handler && handler(e);
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                var action = e.target.dataset && e.target.dataset.action;
+                if (action && action in eventHandlers) {
+                    eventHandlers[action](e);
+                }
+            });
+        }());
+
+        // Flash mark when it's played over
+        wavesurfer.on('mark', function (marker) {
+            if (marker.timer) { return; }
+
+            marker.timer = setTimeout(function () {
+                var origColor = marker.color;
+                marker.update({ color: 'yellow' });
+
+                setTimeout(function () {
+                    marker.update({ color: origColor });
+                    delete marker.timer;
+                }, 100);
+            }, 100);
+        });
+
+        wavesurfer.on('error', function (err) {
+            console.error(err);
+        });
+        </script>
+
+
+        <script>   
+        function drawVisualization(dataVal, duration) {
+
+        var data = [
+        {
+          'start': new Date(2010,0,1,0,1),
+          'content': 'Firework',
+          'customProps': { 'fired': false, 'num': 1, 'colour': 100 }
+        },
+        {
+          'start': new Date(2010,0,1,0,1, 10),
+          'content': 'Firework 2',
+          'customProps': { 'fired': false, 'num': 2, 'colour': 800 }
+        }
+        ]
+
+        var options = {
+          'width':  '100%',
+          'height': '200px',
+          'editable': true, 
+          'style': 'box',
+          "min": new Date(2010, 0, 1 , 0, 0,0,0),
+          "max": new Date(2010, 0, 1 , 0, 0, 0, duration.duration),
+          "zoomMin": 10,
+          "zoomMax": 1000 * 60 * 60,
+          "zoomable": true,
+          "showMajorLabels": false,
+          "animateZoom": true,
+          "showCustomTime": true
+        };
+
+        timeline = new links.Timeline(document.getElementById('mytimeline'));
+        links.events.addListener(timeline, 'ready', function() {
+          allFireworks = timeline.getData();
+          timeline.setVisibleChartRange(new Date(2010, 0, 1 , 0, 0,0,0), new Date(2010, 0, 1 , 0, 0, 0, duration.duration));
+         });
+
+        timeline.draw(data, options);
+    }
+
+      var timeline;
+      $(function() {
+
+        wavesurfer.on('ready', function () {
+          wavesurfer.play();
+          var duration = wavesurfer.backend.getDuration();
+          drawVisualization([], {duration: duration * 1000});
+            
+          wavesurfer.backend.on('audioprocess', function(progress) {
+            var secs = Math.floor(progress)
+            var ms = (progress - secs) * 1000
+            var date = new Date(2010, 0, 1, 0, 0, secs, ms);
+            timeline.setCustomTime(date);
+          });
+
+          links.events.addListener(timeline, 'timechange', function (time) {
+              var timeline_minutes_in_msecs = time.time.getMinutes() * 60 * 1000
+              var timeline_seconds_in_msecs = time.time.getSeconds() * 1000
+              var timeline_milliseconds_in_msecs = time.time.getMilliseconds()
+              var timeline_total_time_in_msecs = timeline_minutes_in_msecs + timeline_seconds_in_msecs + timeline_milliseconds_in_msecs
+              
+              wavesurfer.seekTo(timeline_total_time_in_msecs / (wavesurfer.backend.getDuration() * 1000));
+              
+              
+          });
+
+
+          
+
+
+          widget.bind(SC.Widget.Events.PLAY_PROGRESS, function(message) {
+            // date = new Date(2010, 0, 1 , 0, 0, 0, (message.currentPosition)) 
+            // timeline.setCustomTime(date);
+            allFireworks.forEach(function(firework) {
+              if(date >= firework.start - (1.6 * 1000) && firework.customProps.fired == false) {
+                firework.customProps.fired = true;
+                Fireworks.createParticle(null, null, null, firework.customProps.colour);
+              }
+              if(date <= firework.start - (1.6 * 1000)) {
+                firework.customProps.fired = false;
+              }
+            });
+
+            links.events.addListener(timeline, 'timechange', function (time) {
+              var timeline_minutes_in_msecs = time.time.getMinutes() * 60 * 1000
+              var timeline_seconds_in_msecs = time.time.getSeconds() * 1000
+              var timeline_milliseconds_in_msecs = time.time.getMilliseconds()
+              var timeline_total_time_in_msecs = timeline_minutes_in_msecs + timeline_seconds_in_msecs + timeline_milliseconds_in_msecs
+              widget.seekTo(timeline_total_time_in_msecs);
+            });
+          });
+        });
+        
+        $(".seeker").on({
+          click: function() { 
+            widget.seekTo(50000);
+            widget.getPosition(function(pos){
+              console.log(pos);
+            });
+          }
+        });
+
+        // $(document).on('mousedown', function(e) {
+        //   wavesurfer.pause();
+        // })
+
+        $(document).on('keydown', function(e) {
+          if(e.keyCode==32) {
+            widget.toggle();
+          }
+        });
+
+      });
+
+    </script>
+
+    </head>
+    <div id="mytimeline"></div>
+    <body itemscope itemtype="http://schema.org/WebApplication">
+        <div class="container">
+            <div class="header">
+            </div>
+
+            <div id="demo">
+                <div id="waveform">
+                    <div class="progress progress-striped active" id="progress-bar">
+                        <div class="progress-bar progress-bar-info"></div>
+                    </div>
+
+                    <!-- Here be the waveform -->
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" data-action="back">
+                        <i class="glyphicon glyphicon-step-backward"></i>
+                        Backward
+                    </button>
+
+                    <button class="btn btn-primary" data-action="play">
+                        <i class="glyphicon glyphicon-play"></i>
+                        Play
+                        /
+                        <i class="glyphicon glyphicon-pause"></i>
+                        Pause
+                    </button>
+
+                    <button class="btn btn-primary" data-action="forth">
+                        <i class="glyphicon glyphicon-step-forward"></i>
+                        Forward
+                    </button>
+
+                    <button class="btn btn-primary" data-action="toggle-mute">
+                        <i class="glyphicon glyphicon-volume-off"></i>
+                        Toggle Mute
+                    </button>
+
+                    <div class="mark-controls">
+                        <button class="btn btn-success" data-action="green-mark">
+                            <i class="glyphicon glyphicon-flag"></i>
+                            Set green mark
+                        </button>
+
+                        <button class="btn btn-danger" data-action="red-mark">
+                            <i class="glyphicon glyphicon-flag"></i>
+                            Set red mark
+                        </button>
+                    </div>
+                </div>
+
+                <p class="lead pull-center" id="drop">
+                    Drag'n'drop your favorite
+                    <i class="glyphicon glyphicon-music"></i>-file
+                    here!
+                </p>
+            </div>
+    </body>
+</html>
